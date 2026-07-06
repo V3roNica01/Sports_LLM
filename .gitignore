@@ -8,7 +8,8 @@ build/
 dist/
 
 # Data caches (raw downloads and scrapes are reproducible — don't commit them)
-data/
+# Root-anchored: must not match the src/sports_llm/data source package
+/data/
 *.parquet
 *.csv
 
