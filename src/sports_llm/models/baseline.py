@@ -11,8 +11,11 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss, make_scorer
 from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 FEATURE_COLS = [
     "home_elo", "away_elo", "elo_diff",
@@ -26,9 +29,17 @@ OUTCOMES = ("home", "draw", "away")
 
 
 class MatchOutcomeModel:
+    """Regularized multinomial logistic regression over the match features.
+
+    Chosen over gradient boosting by time-series CV on PL 2015/16: with only
+    a few hundred training matches per season, boosted trees overfit badly
+    (log loss 1.70 vs 1.06 here; uniform guessing is 1.10). Revisit tree
+    models once training spans multiple seasons.
+    """
+
     def __init__(self) -> None:
-        self.clf = HistGradientBoostingClassifier(
-            max_depth=4, learning_rate=0.08, max_iter=300, l2_regularization=1.0
+        self.clf = make_pipeline(
+            StandardScaler(), LogisticRegression(C=0.1, max_iter=1000)
         )
 
     def fit(self, features: pd.DataFrame) -> "MatchOutcomeModel":
@@ -44,9 +55,15 @@ class MatchOutcomeModel:
         the past and overstate accuracy.
         """
         df = features.sort_values("match_date")
+        # Pass labels explicitly: a test fold may contain only one outcome
+        # (e.g. single-team open-data seasons), which log_loss otherwise rejects.
+        scorer = make_scorer(
+            log_loss, greater_is_better=False,
+            response_method="predict_proba", labels=[0, 1, 2],
+        )
         scores = cross_val_score(
             self.clf, df[FEATURE_COLS], df["result"],
-            cv=TimeSeriesSplit(n_splits=splits), scoring="neg_log_loss",
+            cv=TimeSeriesSplit(n_splits=splits), scoring=scorer,
         )
         return float(-scores.mean())
 

@@ -15,8 +15,10 @@ from sports_llm.data import statsbomb
 from sports_llm.features import build_match_features
 from sports_llm.models import MatchOutcomeModel, find_value_bets
 
-# La Liga 2019/20 in the StatsBomb open data (competition_id=11, season_id=42)
-COMPETITION_ID, SEASON_ID = 11, 42
+# Premier League 2015/16 — one of the few complete seasons (all 380 matches)
+# in the StatsBomb open data. Single-team seasons (e.g. Messi-era La Liga)
+# are too sparse to train on.
+COMPETITION_ID, SEASON_ID = 2, 27
 
 
 def main() -> None:
