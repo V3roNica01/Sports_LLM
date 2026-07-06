@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# Data caches (raw downloads and scrapes are reproducible — don't commit them)
+data/
+*.parquet
+*.csv
+
+# Secrets
+.env
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
